@@ -15,13 +15,16 @@
 #define MAXOP   100    /* max size of operand/operator */
 #define NUMBER '0'     /* signal that a number was found */
 #define MAXVAL  100
-#define FUNCTION 'n'
+#define MATH '1'
+#define VARIABLE '2'
 
 size_t sp = 0;   // aka unsigned long -- printf using %zu
 double val[MAXVAL];   // stack of values
 
 char buf[BUFSIZ];
 size_t bufp = 0;
+
+double variables[26];
 
 int getch_(void) { return (bufp > 0) ? buf[--bufp] : getchar(); }
 void ungetch_(int c) {
@@ -35,11 +38,19 @@ int getop(char* s) {
   s[1] = '\0';
 
   if (isalpha(c)) {  // get digits before '.'
+    i = 0;
     while (isalpha(s[++i] = c = getch_())) { }
     s[i] = '\0';
     if (c != EOF) { ungetch_(c); }
     if(i <= 1) {return c;}
-    return FUNCTION;
+    return MATH;
+  }
+
+  if (c == '=' || c == '?')
+  {
+    s[1] = c = getch_();
+    s[2] = '\0';
+    return VARIABLE;
   }
 
   if (!isdigit(c) && c != '.') { return c; }  // if not a digit, return
@@ -95,7 +106,7 @@ void clearstack(void)
   sp = 0;
 }
 
-void mathfunction(char s[])
+void math(char *s)
 {
   double temp;
   if(strcmp(s, "sin") == 0)
@@ -117,6 +128,18 @@ void mathfunction(char s[])
   }
 }
 
+void variable(char* s)
+{
+  if(s[0] == '=')
+  {
+    variables[s[1] - 'A'] = pop();
+  }
+  else if(s[0] == '?')
+  {
+    push(variables[s[1] - 'A']);
+  }
+}
+
 void rpn(void) {
   int type;
   int temp1, temp2;
@@ -126,7 +149,8 @@ void rpn(void) {
   while ((type = getop(s)) != EOF) {
     switch(type) {
       case '\n':    printf("\t%.8g\n", pop());  break;
-      case FUNCTION:    mathfunction(s);            break;
+      case MATH:    math(s);                    break;
+      case VARIABLE:variable(s);                 break;
       case 'p':     printtop();                 break;
       case 'c':     clearstack();               break;
       case 'd':     dup();                      break;
