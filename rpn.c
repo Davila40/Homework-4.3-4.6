@@ -40,9 +40,9 @@ int getop(char* s) {
   if (isalpha(c)) {  // get digits before '.'
     i = 0;
     while (isalpha(s[++i] = c = getch_())) { }
-    s[i] = '\0';
     if (c != EOF) { ungetch_(c); }
-    if(i <= 1) {return c;}
+    if(i <= 1) {return s[0];}
+    s[i] = '\0';
     return MATH;
   }
 
